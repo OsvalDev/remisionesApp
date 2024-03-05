@@ -32,17 +32,8 @@ class PaymentActivity : AppCompatActivity() {
     private var numCompra : String? = ""
     private var id: Int = 0
     private var signeded = false
-    private var entregaUploaded = false
     private var ineUploaded = false
 
-    val pickMedia = registerForActivityResult(PickVisualMedia()) {uri ->
-        if ( uri != null ) {
-            binding.imgEntrega.setImageURI(uri)
-            entregaUploaded = true
-        } else {
-            entregaUploaded = false
-        }
-    }
     val pickMediaIne = registerForActivityResult(PickVisualMedia()) {uri ->
         if ( uri != null ) {
             binding.imgIne.setImageURI(uri)
@@ -92,12 +83,7 @@ class PaymentActivity : AppCompatActivity() {
         }
 
         binding.btnAcept.setOnClickListener{
-            binding.btnAcept.isEnabled = false
             preparePayment()
-        }
-
-        binding.btnEntregaImg.setOnClickListener{
-            pickMedia.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly))
         }
 
         binding.btnIneImg.setOnClickListener{
@@ -124,28 +110,26 @@ class PaymentActivity : AppCompatActivity() {
 
     private fun preparePayment() {
 
-        if (!signeded || binding.etxtMount.text.toString() == "" || binding.etxtName.text.toString() == "" || !ineUploaded || !entregaUploaded) {
+        if (!signeded || binding.etxtMount.text.toString() == "" || binding.etxtName.text.toString() == "") {
             Toast.makeText(this, "Llene todos los campos", Toast.LENGTH_SHORT).show()
             return
         }
-
+        binding.btnAcept.isEnabled = false
         val signatureBitmap = binding.signaturePad.getTransparentSignatureBitmap()
         val byteArrayOutputStream = ByteArrayOutputStream()
-        signatureBitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream)
+        signatureBitmap.compress(Bitmap.CompressFormat.PNG, 50, byteArrayOutputStream)
         val byteArray = byteArrayOutputStream.toByteArray()
         val encodedImage = Base64.encodeToString(byteArray, Base64.DEFAULT)
 
-        val bitmapEntrega = (binding.imgEntrega.drawable as BitmapDrawable).bitmap
-        val byteArrayOutputStreamEntrega = ByteArrayOutputStream()
-        bitmapEntrega.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStreamEntrega)
-        val byteArrayEntrega = byteArrayOutputStreamEntrega.toByteArray()
-        val encodedImageEntrega = Base64.encodeToString(byteArrayEntrega, Base64.DEFAULT)
+        var encodedImageIne = ""
+        if (ineUploaded){
+            val bitmapIne = (binding.imgIne.drawable as BitmapDrawable).bitmap
+            val byteArrayOutputStreamIne = ByteArrayOutputStream()
+            bitmapIne.compress(Bitmap.CompressFormat.PNG, 40, byteArrayOutputStreamIne)
+            val byteArrayIne = byteArrayOutputStreamIne.toByteArray()
+            encodedImageIne = Base64.encodeToString(byteArrayIne, Base64.DEFAULT)
+        }
 
-        val bitmapIne = (binding.imgIne.drawable as BitmapDrawable).bitmap
-        val byteArrayOutputStreamIne = ByteArrayOutputStream()
-        bitmapIne.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStreamIne)
-        val byteArrayIne = byteArrayOutputStreamIne.toByteArray()
-        val encodedImageIne = Base64.encodeToString(byteArrayIne, Base64.DEFAULT)
 
         var chbxCalidadVal: Boolean = false
         var chbxPiezasVal: Boolean = false
@@ -160,7 +144,7 @@ class PaymentActivity : AppCompatActivity() {
             numRemission = numRemission as String,
             pagoPersona = binding.etxtName.text.toString(),
             responsable = id,
-            imgEntrega = encodedImageEntrega,
+            imgEntrega = "",
             imgIne = encodedImageIne,
             calidadVal = chbxCalidadVal,
             cantidadVal = chbxPiezasVal
